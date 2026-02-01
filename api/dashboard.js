@@ -1,4 +1,4 @@
-import { getAIInsights } from "../services/ai.js";
+import { getAIInsights } from "./ai.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
