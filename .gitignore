@@ -1,1 +1,11 @@
+# Dependencies
+node_modules
+
+# Production build
+dist
+
+# Vercel
 .vercel
+
+# OS / Editor junk
+.DS_Store
