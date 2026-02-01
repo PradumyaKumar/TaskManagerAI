@@ -1,3 +1,5 @@
+import { getAIInsights } from "../services/ai.js";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -12,6 +14,10 @@ export default async function handler(req, res) {
       teamMembers
     } = req.body;
 
+    if (!teamMembers || !Array.isArray(teamMembers)) {
+      return res.status(400).json({ error: "Invalid teamMembers" });
+    }
+
     const workloadByPerson = {};
     const memberStatus = {};
 
@@ -21,6 +27,7 @@ export default async function handler(req, res) {
     });
 
     const summary = {
+      project,
       deadline,
       totalTasks,
       completedTasks,
@@ -28,20 +35,16 @@ export default async function handler(req, res) {
       memberStatus
     };
 
-    const insights = {
-      workloadInsight: "AI service temporarily unavailable.",
-      riskAssessment: "Unable to assess project risk.",
-      recommendations: [
-        "Retry AI analysis later",
-        "System handled AI failure gracefully"
-      ],
-      meta: { aiStatus: "partial" }
-    };
+    // 🔥 AI call (safe + graceful fallback inside)
+    const insights = await getAIInsights(summary);
 
-    return res.status(200).json({ summary, insights });
+    return res.status(200).json({
+      summary,
+      insights
+    });
 
   } catch (err) {
-    console.error(err);
+    console.error("Dashboard error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 }

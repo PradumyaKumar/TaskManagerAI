@@ -1,7 +1,12 @@
 export async function getAIInsights(summary) {
-  console.log(process.env.GEMINI_API_KEY)
   try {
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("MISSING_API_KEY");
+    }
+
+    const url =
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent` +
+      `?key=${process.env.GEMINI_API_KEY}`;
 
     const prompt = `
 You are an AI project management assistant.
@@ -27,7 +32,12 @@ ${JSON.stringify(summary, null, 2)}
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }]
+          }
+        ],
         generationConfig: {
           temperature: 0,
           maxOutputTokens: 500
@@ -36,9 +46,8 @@ ${JSON.stringify(summary, null, 2)}
     });
 
     const data = await response.json();
-    console.log("FULL GEMINI JSON:", data);
 
-    // Handle API errors (quota, auth, etc.)
+    // 🔴 Gemini error handling
     if (data.error) {
       if (data.error.code === 429) throw new Error("QUOTA_EXCEEDED");
       throw new Error(data.error.message);
@@ -51,7 +60,7 @@ ${JSON.stringify(summary, null, 2)}
 
     if (!text) throw new Error("EMPTY_RESPONSE");
 
-    // 🛡️ Defensive JSON extraction (handles truncation)
+    // 🛡️ Defensive JSON extraction
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
 
@@ -67,9 +76,8 @@ ${JSON.stringify(summary, null, 2)}
     };
 
   } catch (err) {
-    console.error("Gemini AI handled gracefully:", err.message);
+    console.error("Gemini AI fallback:", err.message);
 
-    // 🔁 Controlled fallback for frontend
     return {
       workloadInsight:
         "AI service temporarily unavailable.",
